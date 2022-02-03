@@ -31,7 +31,6 @@ public class Client extends CustomerRegister {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
 	//@Column(name = "firstName")
 	private String firstName;
 	//@Column(name = "middleInitial")

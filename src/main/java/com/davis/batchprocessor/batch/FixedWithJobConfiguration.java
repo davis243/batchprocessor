@@ -2,9 +2,10 @@ package com.davis.batchprocessor.batch;
 
 
 import com.davis.batchprocessor.classifier.CustomerClassifier;
-import com.davis.batchprocessor.domain.Client;
-import com.davis.batchprocessor.domain.Customer2;
 import com.davis.batchprocessor.domain.CustomerRegister;
+import com.davis.batchprocessor.domain.FieldSetA;
+import com.davis.batchprocessor.domain.FieldSetB;
+import com.davis.batchprocessor.domain.FieldSetMain;
 import com.davis.batchprocessor.matcher.FixedLengthMatchingCompositeLineTokenizer;
 import com.davis.batchprocessor.matcher.RangeKey;
 import com.davis.batchprocessor.repository.ClientRepository;
@@ -27,6 +28,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
+import org.springframework.batch.item.file.transform.FieldSet;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
 import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.batch.item.file.transform.Range;
@@ -75,10 +77,10 @@ public class FixedWithJobConfiguration {
 
 	//@Bean
 //	@StepScope
-	public FlatFileItemReader<CustomerRegister> customerRegisterItemReader(
+	public FlatFileItemReader<FieldSetMain> customerRegisterItemReader(
 			Map<String, JobParameter>  parameters ) {
 
-		return new FlatFileItemReaderBuilder<CustomerRegister>()
+		return new FlatFileItemReaderBuilder<FieldSetMain>()
 				.name("customerRegisterItemReader")
 				.resource(new FileSystemResource((String)parameters.get("customerFile").getValue()))
 				//.fixedLength()
@@ -88,6 +90,7 @@ public class FixedWithJobConfiguration {
 				.names(new String[] {"firstName", "middleInitial"})*/
 				.lineTokenizer(fixedLengthTokenizer())
 				.fieldSetMapper(customerUpdateFieldSetMapper())
+			//	.lineMapper(new PassThroughLineMapper())
 			//	.targetType(Customer2.class)
 			//	.distanceLimit(1)
 				.build();
@@ -99,12 +102,12 @@ public class FixedWithJobConfiguration {
 		FixedLengthMatchingCompositeLineTokenizer compositeLineTokenizer = new FixedLengthMatchingCompositeLineTokenizer();
 		FixedLengthTokenizer tokenizer1 = new FixedLengthTokenizer();
 
-		tokenizer1.setNames(new String[] {"firstName", "tipoReg", "middleInitial"});
-		tokenizer1.setColumns(new Range[]{new Range(1,10),new Range(11,12), new Range(12, 25)});
+		tokenizer1.setNames(new String[] {"first_name", "tipo_reg", "middle_initial","filler"});
+		tokenizer1.setColumns(new Range[]{new Range(1,10),new Range(11,12), new Range(12, 15), new Range(15, 25)});
 
 		FixedLengthTokenizer tokenizer2 = new FixedLengthTokenizer();
 
-		tokenizer2.setNames(new String[] {"firstName",  "tipoReg","middleInitial","lastName"});
+		tokenizer2.setNames(new String[] {"first_name",  "tipo_reg","middle_initial","last_name"});
 		tokenizer2.setColumns(new Range[]{new Range(1,10), new Range(11,12), new Range(12, 15), new Range(15, 25)});
 
 
@@ -118,21 +121,29 @@ public class FixedWithJobConfiguration {
 
 	@Bean
 	@StepScope
-	public FieldSetMapper<CustomerRegister> customerUpdateFieldSetMapper() {
+	public FieldSetMapper<FieldSetMain> customerUpdateFieldSetMapper() {
+	/*	return fieldSet -> {
+			Map<String,String> map = new HashMap<>();
+			for(String name : fieldSet.getNames())
+				map.put(name, fieldSet.readString(name));
+			return map; };*/
+		/*return fieldSet -> {
+			return fieldSet;
+		};*/
 		return fieldSet -> {
-			switch (fieldSet.readString("tipoReg")) {
-				case "AB": return new Customer2(
+			switch (fieldSet.readString("tipo_reg")) {
+				case "AB": return new FieldSetA(fieldSet); /*return new Customer2(
 						fieldSet.readString("firstName"),
 						fieldSet.readString("middleInitial"),
-						fieldSet.readString("tipoReg"));
+						fieldSet.readString("tipoReg"))*/
 
-				case "CD": return new Client(
+				case "CD": return new FieldSetB(fieldSet);/*return new Client(
 						fieldSet.readString("firstName"),
 						fieldSet.readString("middleInitial"),
 						fieldSet.readString("lastName"),
-						fieldSet.readString("tipoReg"));
+						fieldSet.readString("tipoReg"))*/
 
-				default: throw new IllegalArgumentException("Invalid record type was found:" + fieldSet.readString("tipoReg"));
+				default: throw new IllegalArgumentException("Invalid record type was found:" + fieldSet.readString("tipo_reg"));
 			}
 		};
 	}
@@ -162,9 +173,10 @@ public class FixedWithJobConfiguration {
 
 		TaskletStep copyFileStep = this.stepBuilderFactory.get("customerRegisterFileStep")//.tasklet(tasklet).build();
 
-				.<CustomerRegister, CustomerRegister>chunk(10000)
+				.<FieldSetMain, FieldSetMain>chunk(10000)
 				.reader(customerRegisterItemReader(parameters))
 				.writer(classifierCompositeItemWriter())
+				//.writer(new Customer2ItemWriter(dataSource, customer2Repository))
 				.taskExecutor(new SimpleAsyncTaskExecutor())
 				.listener(new JobParameterExecutionContextCopyListener())
 				.build();
@@ -174,9 +186,9 @@ public class FixedWithJobConfiguration {
 	// Classifier
 	@Bean
 	@StepScope
-	public ClassifierCompositeItemWriter<CustomerRegister> classifierCompositeItemWriter() throws Exception {
-		Classifier<CustomerRegister, ItemWriter<? super CustomerRegister>> classifier = new CustomerClassifier(clientItemWriter(), customer2ItemWriter());
-		return new ClassifierCompositeItemWriterBuilder<CustomerRegister>()
+	public ClassifierCompositeItemWriter<FieldSetMain> classifierCompositeItemWriter() throws Exception {
+		Classifier<FieldSetMain, ItemWriter<? super FieldSetMain>> classifier = new CustomerClassifier(dataSource);
+		return new ClassifierCompositeItemWriterBuilder<FieldSetMain>()
 				.classifier(classifier)
 				.build();
 	}
@@ -211,11 +223,11 @@ public class FixedWithJobConfiguration {
 		return new ClientItemWriter(dataSource, clientRepository);
 	}
 
-	@Bean
+/*	@Bean
 	@StepScope
 	public Customer2ItemWriter customer2ItemWriter() {
-		return new Customer2ItemWriter(dataSource, customer2Repository);
-	}
+		return new Customer2ItemWriter(dataSource, "");
+	}*/
 
 
 
