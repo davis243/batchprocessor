@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test_batch_db
+    username: postgres
+    password: postgres01
+    driverClassName: org.postgresql.Driver
+ #   auto-commit: false
+    hikari:
+      minimumIdle: 5
+      maximumPoolSize: 20
+      idleTimeout: 120000
+      connectionTimeout: 300000
+      leakDetectionThreshold: 300000
+  batch:
+    initialize-schema: always
+    job:
+      enabled: false
