@@ -8,7 +8,8 @@ import org.springframework.batch.item.file.transform.FieldSet;
 @AllArgsConstructor
 @Getter
 @Setter
-public class FieldSetA extends FieldSetMain {
+public class FieldSetA  {
 
+    private int lineNumber;
     private FieldSet fieldSet;
 }

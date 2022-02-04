@@ -46,10 +46,12 @@ public class HomeController {
 	public ResponseEntity home(){Map<String, JobParameter> confMap = new HashMap<>();
 		confMap.put("customerFile", new JobParameter("/Users/user/David/sandbox/batchprocessor/src/main/resources/fixed.txt"));
 		confMap.put("uuid", new JobParameter(UUID.randomUUID().toString()));
+		confMap.put("country", new JobParameter("PE"));
 
 		Map<String, JobParameter> confMap2 = new HashMap<>();
 		confMap2.put("customerFile", new JobParameter("/Users/user/David/sandbox/batchprocessor/src/main/resources/fixed2.txt"));
 		confMap2.put("uuid", new JobParameter(UUID.randomUUID().toString()));
+	  	confMap2.put("country", new JobParameter("PE"));
 
 		  Map<String, JobParameter> confMap3 = new HashMap<>();
 		  confMap3.put("customerFile", new JobParameter("/Users/user/David/sandbox/batchprocessor/src/main/resources/fixed3.txt"));
@@ -67,11 +69,11 @@ public class HomeController {
 					.next(withFixedTypeWidthJob.customerRegisterFileStep(confMap))
 					.build(), jobParameters);
 
-	/*		jobLauncher2.run((Job) this.jobBuilderFactory.get(confMap2.get("customerFile").toString())
+			jobLauncher2.run((Job) this.jobBuilderFactory.get(confMap2.get("customerFile").toString())
 					.start(withFixedTypeWidthJob.downloadFileStep(confMap2))
 					.next(withFixedTypeWidthJob.customerRegisterFileStep(confMap2))
 					.build(), jobParameters2);
-
+/*
 			jobLauncher2.run((Job) this.jobBuilderFactory.get(confMap3.get("customerFile").toString())
 					.start(withFixedTypeWidthJob.downloadFileStep(confMap3))
 					.next(withFixedTypeWidthJob.customerRegisterFileStep(confMap3))

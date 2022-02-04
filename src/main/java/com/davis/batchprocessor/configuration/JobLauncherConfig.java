@@ -21,8 +21,8 @@ public class JobLauncherConfig {
     @Bean
     public ThreadPoolTaskExecutor taskExecutorJobLauncher() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-        taskExecutor.setCorePoolSize(1);
-        taskExecutor.setMaxPoolSize(1);
+        taskExecutor.setCorePoolSize(2);
+        taskExecutor.setMaxPoolSize(2);
         taskExecutor.setQueueCapacity(2);
         return taskExecutor;
     }
